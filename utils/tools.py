@@ -65,10 +65,11 @@ def parse_xml(path: str):
         return None
 
 def loadimage(imagepath: str, target_size: tuple[int, int]):
-    im = Image.open(imagepath)
+    im = Image.open(imagepath, mode="r")
     width_org, height_org = im.size
     im = im.resize(size=target_size)
-    return im.resize(size=target_size), width_org, height_org # image, width_org ,height_org
+    im = im.convert("RGB")
+    return im, width_org, height_org # image, width_org ,height_org
 
 
 def prepare_data(image_path:str, boxes: np.array, class_identity:np.array):
