@@ -6,4 +6,4 @@ kaggle
 numpy==1.26.1
 xml-python
 pillow==11.1.0
-pandas==2.2.3
+pandas

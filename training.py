@@ -2,7 +2,7 @@ from models import backbone_darknet
 from utils import *
 
 
-BATCH_SIZE = 2
+BATCH_SIZE = 20
 # Get all XML file paths in path_annot and sort them
 xml_files = sorted(
     [
@@ -10,7 +10,7 @@ xml_files = sorted(
         for file_name in os.listdir("data/annotations/")
         if file_name.endswith(".xml")
     ]
-)[:4]
+)
 
 # chia ra thành 3 tập train validation và test
 xml_files_train = xml_files[:int(len(xml_files)* 0.8)]
@@ -58,4 +58,4 @@ model_yolo_v1 = backbone_darknet(input_shape=(448,448,3))
 history = model_yolo_v1.fit(dataset_train, epochs=35,verbose=1,steps_per_epoch=len(xml_files_train) // BATCH_SIZE, callbacks=lr_callback, validation_data=dataset_val ,validation_steps=len(xml_files_validation)//BATCH_SIZE)
 
 # save model
-model_yolo_v1.save("yolov1.keras")d
+model_yolo_v1.save("yolov1.keras")
