@@ -222,10 +222,10 @@ def lr_scheduler(epoch):
     """
     if epoch < 15:
         return 0.001 * (epoch + 1) / 10  # Tăng dần từ 0.001 lên 0.01
-    elif epoch < 20:
+    elif epoch < 35:
         return 0.001
     else:
-        return 0.01 * 0.1 ** ((epoch+50) // 25)  # Giảm dần
+        return 0.01 * 0.1 ** ((epoch+70) // 25)  # Giảm dần
 def outputyolo(label, S=7):
 
     c1 = label[...,4:5] # confident cua box 1
