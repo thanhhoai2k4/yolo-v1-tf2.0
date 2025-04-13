@@ -7,11 +7,11 @@ def backbone_darknet(input_shape=(448, 448, 3)):
     inputs = tf.keras.Input(shape=input_shape)
 
     # Block 1
-    x = tf.keras.layers.Conv2D(64, (7, 7), strides=2, padding='same', activation='relu')(inputs)
+    x = tf.keras.layers.Conv2D(64, (7, 7), strides=2, kernel_regularizer=tf.keras.regularizers.L1(0.0005), padding='same', activation='relu')(inputs)
     x = tf.keras.layers.MaxPooling2D(pool_size=(2, 2), strides=2)(x)
 
     # Block 2
-    x = tf.keras.layers.Conv2D(192, (3, 3), padding='same', activation='relu')(x)
+    x = tf.keras.layers.Conv2D(192, (3, 3), padding='same', kernel_regularizer=tf.keras.regularizers.L1(0.0005), activation='relu')(x)
     x = tf.keras.layers.MaxPooling2D(pool_size=(2, 2), strides=2)(x)
 
     # Block 3

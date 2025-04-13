@@ -45,8 +45,9 @@ dataset_train = dataset_train.prefetch(tf.data.AUTOTUNE)
 dataset_train = dataset_train.repeat()
 
 # data for validation
-dataset_val = dataset_val.batch(BATCH_SIZE)
+dataset_val = dataset_val.batch(1)
 dataset_val = dataset_val.prefetch(tf.data.AUTOTUNE)
+
 
 # set learning rate
 lr_callback = tf.keras.callbacks.LearningRateScheduler(lr_scheduler) # call batch để setting learning rate
@@ -55,7 +56,7 @@ lr_callback = tf.keras.callbacks.LearningRateScheduler(lr_scheduler) # call batc
 model_yolo_v1 = backbone_darknet(input_shape=(448,448,3))
 
 # fit model
-history = model_yolo_v1.fit(dataset_train, epochs=35,verbose=1,steps_per_epoch=len(xml_files_train) // BATCH_SIZE, callbacks=lr_callback, validation_data=dataset_val ,validation_steps=len(xml_files_validation)//BATCH_SIZE)
+history = model_yolo_v1.fit(dataset_train, epochs=70,verbose=1,steps_per_epoch=len(xml_files_train) // BATCH_SIZE, callbacks=lr_callback, validation_data=dataset_val ,validation_steps=len(xml_files_validation)//BATCH_SIZE)
 
 # save model
 model_yolo_v1.save("yolov1.keras")

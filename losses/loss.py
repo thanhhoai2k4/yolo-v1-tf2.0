@@ -52,7 +52,7 @@ class YOLOLoss(tf.keras.losses.Loss):
                             tf.math.reduce_sum((1 - y_true[..., 4:5]) * tf.math.square(0 - y_pred[..., 9:10]))
 
         total_loss = self.lambda_coord * (loss_xy + loss_wh)  + confident_loss +  class_loss + self.lambda_noobj * no_confident_loss
-        return total_loss
+        return total_loss / tf.cast(tf.shape(y_true)[0], dtype=tf.float32)
 
     def calculate_iou(self, true_boxes, pred_boxes):
         """
