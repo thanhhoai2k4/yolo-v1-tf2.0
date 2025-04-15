@@ -2,7 +2,7 @@ from models import backbone_darknet
 from utils import *
 
 
-BATCH_SIZE = 20
+BATCH_SIZE = 2
 # Get all XML file paths in path_annot and sort them
 xml_files = sorted(
     [
@@ -10,12 +10,16 @@ xml_files = sorted(
         for file_name in os.listdir("data/annotations/")
         if file_name.endswith(".xml")
     ]
-)
+)[:20]
+
 
 # chia ra thành 3 tập train validation và test
 xml_files_train = xml_files[:int(len(xml_files)* 0.8)]
 xml_files_validation = xml_files[int(len(xml_files)* 0.8):int(len(xml_files)* 0.9)]
 xml_files_test = xml_files[int(len(xml_files)* 0.9):]
+
+print("xml file: " , xml_files_train)
+
 
 def tf_data(xmls):
     for xml in xmls:
@@ -45,7 +49,7 @@ dataset_train = dataset_train.prefetch(tf.data.AUTOTUNE)
 dataset_train = dataset_train.repeat()
 
 # data for validation
-dataset_val = dataset_val.batch(1)
+dataset_val = dataset_val.batch(BATCH_SIZE)
 dataset_val = dataset_val.prefetch(tf.data.AUTOTUNE)
 
 
@@ -54,9 +58,10 @@ lr_callback = tf.keras.callbacks.LearningRateScheduler(lr_scheduler) # call batc
 
 # load backbone
 model_yolo_v1 = backbone_darknet(input_shape=(448,448,3))
+model_yolo_v1.load_weights("my_model.weights.h5")
 
 # fit model
-history = model_yolo_v1.fit(dataset_train, epochs=70,verbose=1,steps_per_epoch=len(xml_files_train) // BATCH_SIZE, callbacks=lr_callback, validation_data=dataset_val ,validation_steps=len(xml_files_validation)//BATCH_SIZE)
+history = model_yolo_v1.fit(dataset_train, epochs=10,verbose=1,steps_per_epoch=len(xml_files_train) // BATCH_SIZE, callbacks=lr_callback, validation_data=dataset_val ,validation_steps=len(xml_files_validation)//BATCH_SIZE)
 
 # save model
-model_yolo_v1.save("yolov1.keras")
+model_yolo_v1.save_weights(filepath="my_model.weights.h5")

@@ -7,11 +7,11 @@ def backbone_darknet(input_shape=(448, 448, 3)):
     inputs = tf.keras.Input(shape=input_shape)
 
     # Block 1
-    x = tf.keras.layers.Conv2D(64, (7, 7), strides=2, kernel_regularizer=tf.keras.regularizers.L1(0.0005), padding='same', activation='relu')(inputs)
+    x = tf.keras.layers.Conv2D(64, (7, 7), strides=2, padding='same', activation='relu')(inputs)
     x = tf.keras.layers.MaxPooling2D(pool_size=(2, 2), strides=2)(x)
 
     # Block 2
-    x = tf.keras.layers.Conv2D(192, (3, 3), padding='same', kernel_regularizer=tf.keras.regularizers.L1(0.0005), activation='relu')(x)
+    x = tf.keras.layers.Conv2D(192, (3, 3), padding='same', activation='relu')(x)
     x = tf.keras.layers.MaxPooling2D(pool_size=(2, 2), strides=2)(x)
 
     # Block 3
@@ -43,20 +43,20 @@ def backbone_darknet(input_shape=(448, 448, 3)):
 
     # head
     x = tf.keras.layers.Flatten()(x) # flatten layers
-    x = tf.keras.layers.Dense(4096, activation="relu")(x)
+    x = tf.keras.layers.Dropout(0.6)(x)
     x = tf.keras.layers.Dense(588, activation="linear")(x)
     x = tf.keras.layers.Reshape(target_shape=(7,7,12))(x)
     # Output Feature Map (7x7x12 cho YOLO head)
     outputs = x
 
-    model_yolo_v1 = tf.keras.Model(inputs, outputs, name='yolo_v1_model') # model cần trả về
+    model_yolo_v1 = tf.keras.Model(inputs=inputs, outputs=outputs, name='yolo_v1_model') # model cần trả về
 
     yolo_map_metric = YoloV1Metric(iou_threshold=0.5)
 
     #compile model
-    optimizer = tf.keras.optimizers.SGD(0.001, momentum=0.9)
+    optimizer = tf.keras.optimizers.SGD(0.0001, momentum=0.9)
     model_yolo_v1.compile(
-        optimizer=optimizer, loss=YOLOLoss(), metrics=[yolo_map_metric]
+        optimizer=optimizer, loss=YOLOLoss()
     )
 
     return model_yolo_v1

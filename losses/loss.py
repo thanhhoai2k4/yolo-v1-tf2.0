@@ -28,13 +28,11 @@ class YOLOLoss(tf.keras.losses.Loss):
         index_max = tf.math.argmax(ious, axis=-1)
         iou_max = tf.gather(ious, index_max, batch_dims=3, axis=-1)
 
-        cc = y_true[...,4:5]
-        bb = y_true[...,0:2]
         box_pred = tf.stack([y_pred[...,0:5], y_pred[...,5:10]], axis=-2)
         box_max = tf.gather(box_pred, index_max, batch_dims=3, axis=-2)
 
         # xy
-        loss_xy = tf.reduce_sum(y_true[...,4:5] * tf.square(y_true[...,0:2] - box_max[...,0:2]))
+        loss_xy = tf.reduce_sum(y_true[...,4:5] * tf.square(y_true[...,0:2] - box_max[...,0:2]), axis=-1)
 
         # wh
         w = y_true[...,4:5] * tf.math.square(tf.math.sqrt(tf.maximum(box_max[...,2:3], 1e-6)) - tf.math.sqrt(tf.maximum(y_true[...,2:3], 1e-6)))
@@ -43,16 +41,18 @@ class YOLOLoss(tf.keras.losses.Loss):
 
         # confident
         confident_loss = tf.math.reduce_sum(y_true[...,4:5] * tf.math.square(y_true[...,4:5] - box_max[...,4:5]))
+        c= box_max[...,4:5]
+
 
         # classification loss
         class_loss = tf.math.reduce_sum(y_true[...,4:5] * tf.math.square(y_true[...,5:5+self.C] - y_pred[...,-self.C:]))
 
         # confiden no object
-        no_confident_loss = tf.math.reduce_sum((1 - y_true[..., 4:5]) * tf.math.square(0 - y_pred[..., 4:5])) + \
-                            tf.math.reduce_sum((1 - y_true[..., 4:5]) * tf.math.square(0 - y_pred[..., 9:10]))
+        no_confident_loss = tf.math.reduce_sum((1 - y_true[..., 4:5]) * tf.math.square(y_pred[...,4:5] - y_pred[..., 4:5])) + \
+                            tf.math.reduce_sum((1 - y_true[..., 4:5]) * tf.math.square(y_pred[...,9:10] - y_pred[..., 9:10]))
 
         total_loss = self.lambda_coord * (loss_xy + loss_wh)  + confident_loss +  class_loss + self.lambda_noobj * no_confident_loss
-        return total_loss / tf.cast(tf.shape(y_true)[0], dtype=tf.float32)
+        return total_loss/ tf.cast(tf.shape(y_true)[0], tf.float32)
 
     def calculate_iou(self, true_boxes, pred_boxes):
         """

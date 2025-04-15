@@ -2,10 +2,10 @@ from utils import  *
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+from models.backbone import *
 
 
-
-def plot_detections(image, boxes, confidences, classes, conf_threshold=0.7):
+def plot_detections(image, boxes, confidences, classes, conf_threshold=0.5):
     """
     Hiển thị ảnh và vẽ bounding box trên đó đối với các dự đoán có confidence > conf_threshold.
 
@@ -24,7 +24,8 @@ def plot_detections(image, boxes, confidences, classes, conf_threshold=0.7):
 
     # Tạo figure cho matplotlib
     fig, ax = plt.subplots(1)
-    ax.imshow(image.astype(np.uint8))
+    ax.set_aspect('equal')
+    plt.imshow(image)
 
     # Duyệt qua từng box
     for i, box in enumerate(boxes):
@@ -49,38 +50,42 @@ def plot_detections(image, boxes, confidences, classes, conf_threshold=0.7):
     ax.set_title("Detected Boxes (confidence > {:.1f})".format(conf_threshold))
     plt.axis("off")
     plt.show()
-# tải model từ local
-yolov1 = tf.keras.models.load_model("yolov1.keras", compile=False, safe_mode=True)
 
-
-# sử lý ảnh
-image1,_,_ = loadimage("D:\yolo-v1-tf2.0\data\images\Cats_Test2.png", (448,448))
-image1 = np.array(image1)
-image = image1/255.0
-image = np.expand_dims(image,0)
-outputYOLO = yolov1.predict(image)
-
-# sử lý ảnh
-image2,_,_ = loadimage("D:\yolo-v1-tf2.0\data\images\Cats_Test2.png", (448,448))
-image2 = np.array(image2)
-image22 = image2/255.0
-image22 = np.expand_dims(image22,0)
-## 78 81 79
-# dự đoán ảnh
-outputYOLO22 = yolov1.predict(image22)
-
-# chuyển ảnh sang numpy b,c,c sang numpy
-box, c, classes = outputyolo(outputYOLO,7)
-box = np.array(box)
-c = np.array(c)
-classes = np.array(classes)
-
-box1, c1, classes1 = outputyolo(outputYOLO22,7)
-box = np.array(box)
-c = np.array(c)
-classes = np.array(classes)
+# # tải model từ local
+yolov1 = backbone_darknet((448,448,3))
+yolov1.load_weights("my_model.weights.h5")
 
 
 
-print(box)
-print(box1)
+image1,_,_ = loadimage("data/images/Cats_Test1.png", (448,448))
+image_pre1 = np.expand_dims(image1,0)
+image_pre1 = image_pre1/255.0
+result1 = yolov1.predict(image_pre1)
+box_1 ,c1 , classes1 = outputyolo(result1,7)
+box_1 = np.array(box_1)
+c1 = np.array(c1)
+classes1 = np.array(classes1)
+plot_detections(image1 , box_1 , c1 , classes1 , 0.95)
+
+
+
+
+
+
+#
+# image_path, boxes, class_identity = parse_xml("data/annotations/Cats_Test100.xml")
+# image, boxes, class_identity = prepare_data(image_path=image_path, boxes=boxes, class_identity=class_identity)
+# image, label = convert_onepart(image, boxes, class_identity)
+# a = label[...,0:5]
+# a1 =  label[..., 5:]
+# zeros = np.zeros((7,7,5))
+#
+# kq = np.concatenate([a,a1,zeros], axis=-1)
+# kq = np.expand_dims(kq,0)
+# kq = tf.convert_to_tensor(kq, dtype=tf.float32)
+# box_1 ,c1 , classes1 = outputyolo(kq,7)
+# box_1 = np.array(box_1)
+# c1 = np.array(c1)
+# classes1 = np.array(classes1)
+#
+# plot_detections(image , box_1 , c1 , classes1 , 0.5)
