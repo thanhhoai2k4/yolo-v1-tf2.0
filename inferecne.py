@@ -54,20 +54,35 @@ def plot_detections(image, boxes, confidences, classes, conf_threshold=0.5):
 # # tải model từ local
 yolov1 = backbone_darknet((448,448,3))
 yolov1.load_weights("my_model.weights.h5")
+#
+# ones = np.ones((1,448,448,3), dtype=np.float32)
+# zeros = np.zeros((1,448,448,3), dtype=np.float32)
+#
+# o = yolov1.predict(ones)
+# z = yolov1.predict(zeros)
+#
+# box_1 ,c1 , classes1 = outputyolo(o,7)
+#
+# box_2 ,c2 , classes2 = outputyolo(z,7)
+#
+#
+# c = np.concatenate([c1,c2], axis=-1)
+# print(c)
 
 
 
-image1,_,_ = loadimage("data/images/Cats_Test1.png", (448,448))
+
+image1,_,_ = loadimage("01.jpg", (448,448))
 image_pre1 = np.expand_dims(image1,0)
 image_pre1 = image_pre1/255.0
 result1 = yolov1.predict(image_pre1)
 box_1 ,c1 , classes1 = outputyolo(result1,7)
+c1 = tf.sigmoid(c1)
 box_1 = np.array(box_1)
 c1 = np.array(c1)
 classes1 = np.array(classes1)
-plot_detections(image1 , box_1 , c1 , classes1 , 0.95)
-
-
+plot_detections(image_pre1[0] , box_1 , c1 , classes1 , 0.7)
+print(c1)
 
 
 

@@ -222,18 +222,14 @@ def lr_scheduler(epoch):
     """
     if epoch < 10:
         return 0.0001
-    elif epoch <20:
-        return 0.001
-    elif epoch < 40:
-        return 0.0001
-    elif epoch < 60:
-        return 0.001
     else:
-        return 0.00001
+        return 0.001
 def outputyolo(label, S=7):
 
     c1 = label[...,4:5] # confident cua box 1
+    c1 = tf.sigmoid(c1)
     c2 = label[..., 9:10] # confident cua box 2
+    c2 = tf.sigmoid(c2)
 
     confident = tf.concat([c1, c2], axis=-1)
 
