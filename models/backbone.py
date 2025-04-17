@@ -57,7 +57,7 @@ def backbone_darknet(input_shape=(448, 448, 3)):
     yolo_map_metric = YoloV1Metric(iou_threshold=0.5)
 
     #compile model
-    optimizer = tf.keras.optimizers.SGD(0.001, momentum=0.9, clipnorm=1.0)
+    optimizer = tf.keras.optimizers.SGD(0.0001, momentum=0.9, clipnorm=1.0)
     model_yolo_v1.compile(
         optimizer=optimizer, loss=YOLOLoss(), metrics=[yolo_map_metric]
     )

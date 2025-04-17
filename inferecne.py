@@ -54,53 +54,14 @@ def plot_detections(image, boxes, confidences, classes, conf_threshold=0.5):
 # # tải model từ local
 yolov1 = backbone_darknet((448,448,3))
 yolov1.load_weights("my_model.weights.h5")
-#
-# ones = np.ones((1,448,448,3), dtype=np.float32)
-# zeros = np.zeros((1,448,448,3), dtype=np.float32)
-#
-# o = yolov1.predict(ones)
-# z = yolov1.predict(zeros)
-#
-# box_1 ,c1 , classes1 = outputyolo(o,7)
-#
-# box_2 ,c2 , classes2 = outputyolo(z,7)
-#
-#
-# c = np.concatenate([c1,c2], axis=-1)
-# print(c)
 
 
-
-
-image1,_,_ = loadimage("01.jpg", (448,448))
-image_pre1 = np.expand_dims(image1,0)
-image_pre1 = image_pre1/255.0
-result1 = yolov1.predict(image_pre1)
-box_1 ,c1 , classes1 = outputyolo(result1,7)
-c1 = tf.sigmoid(c1)
-box_1 = np.array(box_1)
-c1 = np.array(c1)
-classes1 = np.array(classes1)
-plot_detections(image_pre1[0] , box_1 , c1 , classes1 , 0.7)
-print(c1)
-
-
-
-
-#
-# image_path, boxes, class_identity = parse_xml("data/annotations/Cats_Test100.xml")
-# image, boxes, class_identity = prepare_data(image_path=image_path, boxes=boxes, class_identity=class_identity)
-# image, label = convert_onepart(image, boxes, class_identity)
-# a = label[...,0:5]
-# a1 =  label[..., 5:]
-# zeros = np.zeros((7,7,5))
-#
-# kq = np.concatenate([a,a1,zeros], axis=-1)
-# kq = np.expand_dims(kq,0)
-# kq = tf.convert_to_tensor(kq, dtype=tf.float32)
-# box_1 ,c1 , classes1 = outputyolo(kq,7)
-# box_1 = np.array(box_1)
-# c1 = np.array(c1)
-# classes1 = np.array(classes1)
-#
-# plot_detections(image , box_1 , c1 , classes1 , 0.5)
+image,_,_ = loadimage("data\images\Cats_Test2.png", (448,448))
+image_pre = np.expand_dims(image,0)
+image_pre = image_pre/255.0
+result = yolov1.predict(image_pre)
+box ,c , classes = outputyolo(result,7)
+box_1 = np.array(box)
+c1 = np.array(c)
+classes1 = np.array(classes)
+plot_detections(image_pre[0] , box_1 , c1 , classes1 , 0.1)

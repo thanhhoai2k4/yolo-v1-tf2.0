@@ -163,10 +163,9 @@ def convert_onepart(image, boxes, labels):
     y_rel = (y_center * S) - j
 
     confident = np.ones(shape=(len(boxes)),dtype=np.float32)
-    zeros = np.zeros(shape=(len(boxes)), dtype=np.float32)
     cell = np.stack([x_rel, y_rel, width, height,confident], axis=-1)
     cell = np.concatenate([cell, labels],axis=1)
-    label[i,j,:] = cell
+    label[j,i,:] = cell
     return image, label
 
 def plot_anchors_xyxy(image:np.array, all_anchors: np.array, labels: np.array)->None:
@@ -220,16 +219,11 @@ def lr_scheduler(epoch):
     :param epoch: số lượng training hiện hành để thực hiện điều chỉnh learning rate
     :return: learning rate . Lúc khởi đầu thì lớn càng về sau thì càng nhỏ
     """
-    if epoch < 10:
-        return 0.0001
-    else:
-        return 0.001
+    return 0.0001
 def outputyolo(label, S=7):
 
     c1 = label[...,4:5] # confident cua box 1
-    c1 = tf.sigmoid(c1)
     c2 = label[..., 9:10] # confident cua box 2
-    c2 = tf.sigmoid(c2)
 
     confident = tf.concat([c1, c2], axis=-1)
 

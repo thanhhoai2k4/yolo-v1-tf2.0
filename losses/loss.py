@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 class YOLOLoss(tf.keras.losses.Loss):
-    def __init__(self, grid_size=7, num_boxes=2, num_classes=2, lambda_coord=5.0, lambda_noobj=0.2):
+    def __init__(self, grid_size=7, num_boxes=2, num_classes=2, lambda_coord=10.0, lambda_noobj=0.1):
         super(YOLOLoss, self).__init__()
         self.S = grid_size  # Kích thước lưới (S x S), mặc định 7x7
         self.B = num_boxes  # Số hộp dự đoán mỗi ô lưới, mặc định 2
@@ -19,14 +19,6 @@ class YOLOLoss(tf.keras.losses.Loss):
         y_true = tf.reshape(y_true, shape=(-1,self.S, self.S, 5+self.C)) # chuyển về chiều mẫu
         y_pred = tf.reshape(y_pred, shape=(-1, self.S, self.S, 5*self.B + self.C)) # chuyển về chiều mẩu
 
-        # chuẩn hóa dữ liệu dữ đoán ve  0-1
-        y_pred = tf.concat([
-            y_pred[..., 0:4],  # Tọa độ hộp 1 (x, y, w, h)
-            tf.sigmoid(y_pred[..., 4:5]),  # Điểm tin cậy c1
-            y_pred[..., 5:9],  # Tọa độ hộp 2 (x, y, w, h)
-            tf.sigmoid(y_pred[..., 9:10]),  # Điểm tin cậy c2
-            tf.nn.softmax(y_pred[..., 10:], axis=-1)  # Xác suất lớp (p1, p2, ..., pn)
-        ], axis=-1)
 
 
         # giua box 1 va box true
