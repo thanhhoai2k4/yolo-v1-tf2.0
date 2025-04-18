@@ -219,7 +219,13 @@ def lr_scheduler(epoch):
     :param epoch: số lượng training hiện hành để thực hiện điều chỉnh learning rate
     :return: learning rate . Lúc khởi đầu thì lớn càng về sau thì càng nhỏ
     """
-    return 0.0001
+    # if (epoch < 20):
+    #     return 0.001
+    # elif epoch < 40:
+    #     return 0.0001
+    # else:
+    #     return epoch ** (50- epoch)* 0.01
+    return 0.001
 def outputyolo(label, S=7):
 
     c1 = label[...,4:5] # confident cua box 1

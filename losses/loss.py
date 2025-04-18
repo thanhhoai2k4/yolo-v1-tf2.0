@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 class YOLOLoss(tf.keras.losses.Loss):
-    def __init__(self, grid_size=7, num_boxes=2, num_classes=2, lambda_coord=10.0, lambda_noobj=0.1):
+    def __init__(self, grid_size=7, num_boxes=2, num_classes=2, lambda_coord=10.0, lambda_noobj=0.5):
         super(YOLOLoss, self).__init__()
         self.S = grid_size  # Kích thước lưới (S x S), mặc định 7x7
         self.B = num_boxes  # Số hộp dự đoán mỗi ô lưới, mặc định 2
@@ -18,7 +18,6 @@ class YOLOLoss(tf.keras.losses.Loss):
         """
         y_true = tf.reshape(y_true, shape=(-1,self.S, self.S, 5+self.C)) # chuyển về chiều mẫu
         y_pred = tf.reshape(y_pred, shape=(-1, self.S, self.S, 5*self.B + self.C)) # chuyển về chiều mẩu
-
 
 
         # giua box 1 va box true
@@ -50,14 +49,18 @@ class YOLOLoss(tf.keras.losses.Loss):
 
 
         # classification loss
-        class_loss = tf.math.reduce_sum(y_true[...,4:5] * tf.math.square(y_true[...,5:5+self.C] - y_pred[...,-self.C:]))
+        # class_loss = tf.math.reduce_sum(y_true[...,4:5] * tf.math.square(y_true[...,5:5+self.C] - y_pred[...,-self.C:]))
+
+        class_loss = tf.math.reduce_sum(tf.math.square(
+            y_true[..., 4:5] * (y_true[...,5:5+self.C] - y_pred[...,-self.C:])
+        ))
 
         # confiden no object
         no_confident_loss = tf.math.reduce_sum((1 - y_true[..., 4:5]) * tf.math.square(0 - y_pred[..., 4:5])) + \
                             tf.math.reduce_sum((1 - y_true[..., 4:5]) * tf.math.square(0 - y_pred[..., 9:10]))
 
-        total_loss = self.lambda_coord * (loss_xy + loss_wh)  + confident_loss +  class_loss + self.lambda_noobj * no_confident_loss
-        return total_loss/ tf.cast(tf.shape(y_true)[0], tf.float32)
+        total_loss = self.lambda_coord * (loss_xy + loss_wh)  +  confident_loss +  class_loss + self.lambda_noobj * no_confident_loss
+        return total_loss
 
     def calculate_iou(self, true_boxes, pred_boxes):
         """
