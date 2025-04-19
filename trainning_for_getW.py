@@ -5,7 +5,7 @@ import tensorflow as tf
 
 
 # Cac sieu tham so
-PATH = "data-classfication/training"
+PATH = ""
 BATCH_SIZE = 64
 IMG_SIZE = (448,448)
 
@@ -28,4 +28,5 @@ DataTraining, DataValidation = tf.keras.preprocessing.image_dataset_from_directo
 
 opt = tf.keras.optimizers.SGD (lr=0.001, momentum=0.9)
 model.compile(optimizer=opt, loss='binary_crossentropy', metrics=['accuracy'])
-model.fit(DataTraining)
+model.fit(DataTraining, epochs=50 )
+model.save_weights(filepath="my_model_getW.weights.h5")
