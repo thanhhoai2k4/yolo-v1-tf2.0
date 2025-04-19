@@ -51,5 +51,5 @@ checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
 
 opt = tf.keras.optimizers.SGD (learning_rate=0.001, momentum=0.9)
 model.compile(optimizer=opt, loss='binary_crossentropy', metrics=['accuracy'])
-model.fit(DataTraining, epochs=50 , validation_data=DataValidation)
+model.fit(DataTraining, epochs=50 , validation_data=DataValidation, callbacks=[checkpoint_callback])
 model.save_weights(filepath="my_model_getW.weights.h5")
