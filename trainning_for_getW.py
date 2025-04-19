@@ -41,7 +41,13 @@ DataValidation = DataValidation.map(
   lambda x, y: (rescale(x, training=True), y), num_parallel_calls=tf.data.AUTOTUNE)
 DataValidation = DataValidation.prefetch(tf.data.AUTOTUNE)
 
-
+checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
+    filepath='my_model_getW.weights.h5',              # Tên file để lưu
+    monitor='val_accuracy',                # Theo dõi metric nào (ở đây là val_accuracy)
+    save_best_only=True,                   # Chỉ lưu nếu tốt hơn model trước đó
+    mode='max',                            # mode='max' vì accuracy càng cao càng tốt
+    verbose=1                              # In log khi có model được lưu
+)
 
 opt = tf.keras.optimizers.SGD (learning_rate=0.001, momentum=0.9)
 model.compile(optimizer=opt, loss='binary_crossentropy', metrics=['accuracy'])
