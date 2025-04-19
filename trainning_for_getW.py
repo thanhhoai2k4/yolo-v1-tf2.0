@@ -4,7 +4,7 @@ import tensorflow as tf
 
 # Các siêu tham số
 PATH = "train"
-BATCH_SIZE = 40
+BATCH_SIZE = 35
 IMG_SIZE = (448,448)
 
 # Tải mẩu
@@ -49,6 +49,6 @@ checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
     verbose=1  ,                        # In log khi có model được lưu
 )
 
-opt = tf.keras.optimizers.Adam(learning_rate=0.001)
+opt = tf.keras.optimizers.Adam(learning_rate=0.0001)
 model.compile(optimizer=opt, loss='binary_crossentropy', metrics=['accuracy'])
 model.fit(DataTraining, epochs=50 , validation_data=DataValidation, callbacks=[checkpoint_callback])
