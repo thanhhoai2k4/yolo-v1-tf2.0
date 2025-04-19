@@ -6,7 +6,7 @@ import tensorflow as tf
 
 # Cac sieu tham so
 PATH = "train"
-BATCH_SIZE = 64
+BATCH_SIZE = 32
 IMG_SIZE = (448,448)
 
 # load model
@@ -34,13 +34,11 @@ rescale = tf.keras.Sequential([
 
 DataTraining = DataTraining.map(
   lambda x, y: (rescale(x, training=True), y), num_parallel_calls=tf.data.AUTOTUNE)
-DataTraining = DataTraining.shuffle(1000)
 DataTraining = DataTraining.prefetch(tf.data.AUTOTUNE)
 
 
 DataValidation = DataValidation.map(
   lambda x, y: (rescale(x, training=True), y), num_parallel_calls=tf.data.AUTOTUNE)
-DataValidation = DataValidation.shuffle(1000)
 DataValidation = DataValidation.prefetch(tf.data.AUTOTUNE)
 
 
