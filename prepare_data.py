@@ -15,8 +15,9 @@ def insert_data():
 
     # tạo thư mục dogs and cats
     try:
-        os.mkdir("data-classfication/dogs")
-        os.mkdir("data-classfication/cats")
+        os.mkdir("data-classfication/training")
+        os.mkdir("data-classfication/training/dogs")
+        os.mkdir("data-classfication/training/cats")
     except:
         print ("Thu muc khong duoc tao")
 
@@ -28,10 +29,10 @@ def insert_data():
         list_part = path.split("/")
         source = path
         if list_part[-1].startswith("cat"):
-            destination = "data-classfication/cats/" + list_part[-1]
+            destination = "data-classfication/training/cats/" + list_part[-1]
             shutil.copyfile(source, destination)
         else:
-            destination = "data-classfication/dogs/" + list_part[-1]
+            destination = "data-classfication/training/dogs/" + list_part[-1]
             shutil.copyfile(source, destination)
         i += 1
     if (i == len(image_paths)):

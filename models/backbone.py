@@ -113,8 +113,5 @@ def pre_traing(input_shape):
     x = tf.keras.layers.Dropout(0.6)(x)
     x = tf.keras.layers.Dense(1, activation="sigmoid")(x)
 
-    model = tf.keras.Model(inputs=inputs, outputs=x, name='yolo_v1_model')
-    model.compile(loss="binary_crossentropy",  # Hàm mất mát cho phân loại nhị phân
-                  optimizer="adam",  # Thuật toán tối ưu phổ biến
-                  metrics=["accuracy"])
+    model = tf.keras.Model(inputs=inputs, outputs=x, name='backbone_pred')
     return model
