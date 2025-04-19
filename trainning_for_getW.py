@@ -3,8 +3,8 @@ import tensorflow as tf
 
 
 # Các siêu tham số
-PATH = "data-classfication/training"
-BATCH_SIZE = 4
+PATH = "train"
+BATCH_SIZE = 40
 IMG_SIZE = (448,448)
 
 # Tải mẩu
@@ -19,7 +19,7 @@ DataTraining, DataValidation = tf.keras.preprocessing.image_dataset_from_directo
     batch_size=BATCH_SIZE,
     image_size=IMG_SIZE,
     shuffle=True,
-    seed = 10,
+    seed = 1000,
     validation_split = 0.2,
     subset = "both"
 )
