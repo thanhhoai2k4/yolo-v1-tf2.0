@@ -26,6 +26,25 @@ DataTraining, DataValidation = tf.keras.preprocessing.image_dataset_from_directo
     subset = "both"
 )
 
+IMG_SIZE = 180
+
+rescale = tf.keras.Sequential([
+  tf.keras.layers.Rescaling(1./255)
+])
+
+DataTraining = DataTraining.map(
+  lambda x, y: (rescale(x, training=True), y), num_parallel_calls=tf.data.AUTOTUNE)
+DataTraining = DataTraining.shuffle(1000)
+DataTraining = DataTraining.prefetch(tf.data.AUTOTUNE)
+
+
+DataValidation = DataValidation.map(
+  lambda x, y: (rescale(x, training=True), y), num_parallel_calls=tf.data.AUTOTUNE)
+DataValidation = DataValidation.shuffle(1000)
+DataValidation = DataValidation.prefetch(tf.data.AUTOTUNE)
+
+
+
 opt = tf.keras.optimizers.SGD (learning_rate=0.001, momentum=0.9)
 model.compile(optimizer=opt, loss='binary_crossentropy', metrics=['accuracy'])
 model.fit(DataTraining, epochs=50 , validation_data=DataValidation)
