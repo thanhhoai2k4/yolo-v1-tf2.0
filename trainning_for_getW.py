@@ -6,7 +6,7 @@ import tensorflow as tf
 
 # Cac sieu tham so
 PATH = "data-classfication/training"
-BATCH_SIZE = 4
+BATCH_SIZE = 64
 IMG_SIZE = (448,448)
 
 # load model
