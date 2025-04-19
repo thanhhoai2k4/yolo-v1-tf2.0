@@ -3,8 +3,8 @@ import tensorflow as tf
 
 
 # Các siêu tham số
-PATH = "train"
-BATCH_SIZE = 32
+PATH = "data-classfication/training"
+BATCH_SIZE = 4
 IMG_SIZE = (448,448)
 
 # Tải mẩu
@@ -19,7 +19,7 @@ DataTraining, DataValidation = tf.keras.preprocessing.image_dataset_from_directo
     batch_size=BATCH_SIZE,
     image_size=IMG_SIZE,
     shuffle=True,
-    seed = 1000,
+    seed = 10,
     validation_split = 0.2,
     subset = "both"
 )
@@ -42,13 +42,13 @@ DataValidation = DataValidation.prefetch(tf.data.AUTOTUNE)
 
 
 checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
-    filepath='my_model_getW.weights.h5',# Tên file để lưu
+    filepath='my_model_getW.keras',# Tên file để lưu
     monitor='val_accuracy',             # Theo dõi metric nào (ở đây là val_accuracy)
     save_best_only=True,                # Chỉ lưu nếu tốt hơn model trước đó
     mode='max',                         # mode='max' vì accuracy càng cao càng tốt
-    verbose=1                           # In log khi có model được lưu
+    verbose=1  ,                        # In log khi có model được lưu
 )
 
-opt = tf.keras.optimizers.SGD (learning_rate=0.001, momentum=0.9)
+opt = tf.keras.optimizers.Adam(learning_rate=0.001)
 model.compile(optimizer=opt, loss='binary_crossentropy', metrics=['accuracy'])
 model.fit(DataTraining, epochs=50 , validation_data=DataValidation, callbacks=[checkpoint_callback])
