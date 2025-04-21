@@ -64,6 +64,6 @@ checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
     verbose=1  ,                        # In log khi có model được lưu
 )
 
-opt = tf.keras.optimizers.SGD(learning_rate=0.01, momentum=0.9)
+opt = tf.keras.optimizers.SGD(learning_rate=0.001, momentum=0.9)
 model.compile(optimizer=opt, loss='binary_crossentropy', metrics=['accuracy'])
 model.fit(DataTraining, epochs=50 , validation_data=DataValidation, callbacks=[checkpoint_callback])
