@@ -20,7 +20,7 @@ DataTraining = tf.keras.preprocessing.image_dataset_from_directory(
     image_size=IMG_SIZE,
     shuffle=True,
     seed = 1000,
-    validation_split = 0.1,
+    validation_split = 0.8,
     subset = "training"
 )
 
@@ -63,6 +63,8 @@ checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
     mode='max',                         # mode='max' vì accuracy càng cao càng tốt
     verbose=1  ,                        # In log khi có model được lưu
 )
+
+
 
 opt = tf.keras.optimizers.SGD(learning_rate=0.001, momentum=0.9)
 model.compile(optimizer=opt, loss='binary_crossentropy', metrics=['accuracy'])
