@@ -30,14 +30,9 @@ labels = tf.convert_to_tensor(labels, dtype=tf.float32)
 lr_callback = tf.keras.callbacks.LearningRateScheduler(lr_scheduler) # call batch để setting learning rate
 # load backbone
 model_yolo_v1 = backbone_darknet(input_shape=(448,448,3))
-
-try:
-    model_yolo_v1.load_weights("my_model.weights.h5")
-except:
-    pass
-
+# model_yolo_v1.load_weights("my_model.weights.h5")
 # fit model
-history = model_yolo_v1.fit(images, labels, epochs=50,verbose=1)
+history = model_yolo_v1.fit(images, labels, epochs=100,verbose=1)
 
 # save model
 model_yolo_v1.save_weights(filepath="my_model.weights.h5")

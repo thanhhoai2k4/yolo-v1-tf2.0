@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 class YOLOLoss(tf.keras.losses.Loss):
-    def __init__(self, grid_size=7, num_boxes=2, num_classes=2, lambda_coord=10.0, lambda_noobj=0.5):
+    def __init__(self, grid_size=7, num_boxes=2, num_classes=2, lambda_coord=5.0, lambda_noobj=1):
         super(YOLOLoss, self).__init__()
         self.S = grid_size  # Kích thước lưới (S x S), mặc định 7x7
         self.B = num_boxes  # Số hộp dự đoán mỗi ô lưới, mặc định 2

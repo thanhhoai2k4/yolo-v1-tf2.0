@@ -56,7 +56,7 @@ yolov1 = backbone_darknet((448,448,3))
 yolov1.load_weights("my_model.weights.h5")
 
 
-image,_,_ = loadimage("data\images\Cats_Test2.png", (448,448))
+image,_,_ = loadimage("data\images\Cats_Test1.png", (448,448))
 image_pre = np.expand_dims(image,0)
 image_pre = image_pre/255.0
 result = yolov1.predict(image_pre)
@@ -64,5 +64,5 @@ box ,c , classes = outputyolo(result,7)
 box = np.array(box)
 c = np.array(c)
 classes = np.array(classes)
-plot_detections(image_pre[0] , box , c , classes , 0.7)
+plot_detections(image_pre[0] , box , c , classes , 0.65)
 print(c)
