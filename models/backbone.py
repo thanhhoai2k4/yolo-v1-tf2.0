@@ -79,7 +79,7 @@ def backbone_darknet(input_shape=(448, 448, 3)):
     x = tf.keras.layers.BatchNormalization()(x)
     x = tf.keras.layers.LeakyReLU(0.1)(x)
 
-    # head
+    # head a
     x = tf.keras.layers.Flatten()(x) # flatten layers
     x = tf.keras.layers.Dense(588, activation="linear")(x)
     x = tf.keras.layers.Reshape(target_shape=(7,7,12))(x)
