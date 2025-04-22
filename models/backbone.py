@@ -18,64 +18,64 @@ def backbone_darknet(input_shape=(448, 448, 3)):
     x = tf.keras.layers.MaxPooling2D(pool_size=(2, 2), strides=2)(x)
 
     # Block 2
-    x = tf.keras.layers.Conv2D(32, (3, 3), padding='same',kernel_initializer='he_normal',use_bias=False, activation=None)(x)
+    x = tf.keras.layers.Conv2D(192, (3, 3), padding='same',kernel_initializer='he_normal',use_bias=False, activation=None)(x)
     x = tf.keras.layers.BatchNormalization()(x)
     x = tf.keras.layers.LeakyReLU(0.1)(x)
     x = tf.keras.layers.MaxPooling2D(pool_size=(2, 2), strides=2)(x)
 
     # Block 3
-    x = tf.keras.layers.Conv2D(32, (1, 1),kernel_initializer='he_normal',use_bias=False, activation=None)(x)
+    x = tf.keras.layers.Conv2D(128, (1, 1),kernel_initializer='he_normal',use_bias=False, activation=None)(x)
     x = tf.keras.layers.BatchNormalization()(x)
     x = tf.keras.layers.LeakyReLU(0.1)(x)
-    x = tf.keras.layers.Conv2D(32, (3, 3),kernel_initializer='he_normal', padding='same', use_bias=False, activation=None)(x)
+    x = tf.keras.layers.Conv2D(256, (3, 3),kernel_initializer='he_normal', padding='same', use_bias=False, activation=None)(x)
     x = tf.keras.layers.BatchNormalization()(x)
     x = tf.keras.layers.LeakyReLU(0.1)(x)
-    x = tf.keras.layers.Conv2D(32, (1, 1),kernel_initializer='he_normal', use_bias=False,activation=None)(x)
+    x = tf.keras.layers.Conv2D(256, (1, 1),kernel_initializer='he_normal', use_bias=False,activation=None)(x)
     x = tf.keras.layers.BatchNormalization()(x)
     x = tf.keras.layers.LeakyReLU(0.1)(x)
-    x = tf.keras.layers.Conv2D(32, (3, 3),kernel_initializer='he_normal', padding='same', use_bias=False,activation=None)(x)
+    x = tf.keras.layers.Conv2D(512, (3, 3),kernel_initializer='he_normal', padding='same', use_bias=False,activation=None)(x)
     x = tf.keras.layers.BatchNormalization()(x)
     x = tf.keras.layers.LeakyReLU(0.1)(x)
     x = tf.keras.layers.MaxPooling2D(pool_size=(2, 2), strides=2)(x)
 
     # Block 4 (4x convolutional layers)
     for _ in range(4):
-        x = tf.keras.layers.Conv2D(32, (1, 1),kernel_initializer='he_normal',use_bias=False, activation=None)(x)
+        x = tf.keras.layers.Conv2D(256, (1, 1),kernel_initializer='he_normal',use_bias=False, activation=None)(x)
         x = tf.keras.layers.BatchNormalization()(x)
         x = tf.keras.layers.LeakyReLU(0.1)(x)
-        x = tf.keras.layers.Conv2D(32, (3, 3),kernel_initializer='he_normal', padding='same',use_bias=False, activation=None)(x)
+        x = tf.keras.layers.Conv2D(512, (3, 3),kernel_initializer='he_normal', padding='same',use_bias=False, activation=None)(x)
         x = tf.keras.layers.BatchNormalization()(x)
         x = tf.keras.layers.LeakyReLU(0.1)(x)
 
-    x = tf.keras.layers.Conv2D(32, (1, 1),kernel_initializer='he_normal', use_bias=False, activation=None)(x)
+    x = tf.keras.layers.Conv2D(512, (1, 1),kernel_initializer='he_normal', use_bias=False, activation=None)(x)
     x = tf.keras.layers.BatchNormalization()(x)
     x = tf.keras.layers.LeakyReLU(0.1)(x)
-    x = tf.keras.layers.Conv2D(32, (3, 3), padding='same',kernel_initializer='he_normal', use_bias=False, activation=None)(x)
+    x = tf.keras.layers.Conv2D(1024, (3, 3), padding='same',kernel_initializer='he_normal', use_bias=False, activation=None)(x)
     x = tf.keras.layers.BatchNormalization()(x)
     x = tf.keras.layers.LeakyReLU(0.1)(x)
     x = tf.keras.layers.MaxPooling2D(pool_size=(2, 2), strides=2)(x)
 
     # Block 5 (2x convolutional layers)
     for _ in range(2):
-        x = tf.keras.layers.Conv2D(32, (1, 1), kernel_initializer='he_normal',activation=None, use_bias=False)(x)
+        x = tf.keras.layers.Conv2D(512, (1, 1), kernel_initializer='he_normal',activation=None, use_bias=False)(x)
         x = tf.keras.layers.BatchNormalization()(x)
         x = tf.keras.layers.LeakyReLU(0.1)(x)
-        x = tf.keras.layers.Conv2D(32, (3, 3), padding='same',kernel_initializer='he_normal', use_bias=False,activation=None)(x)
+        x = tf.keras.layers.Conv2D(1024, (3, 3), padding='same',kernel_initializer='he_normal', use_bias=False,activation=None)(x)
         x = tf.keras.layers.BatchNormalization()(x)
         x = tf.keras.layers.LeakyReLU(0.1)(x)
 
 
-    x = tf.keras.layers.Conv2D(32, (3,3), strides=1, padding="same",kernel_initializer='he_normal', use_bias=False,activation=None)(x)
+    x = tf.keras.layers.Conv2D(1024, (3,3), strides=1, padding="same",kernel_initializer='he_normal', use_bias=False,activation=None)(x)
     x = tf.keras.layers.BatchNormalization()(x)
     x = tf.keras.layers.LeakyReLU(0.1)(x)
-    x = tf.keras.layers.Conv2D(32, (3,3), strides=2, padding="same",kernel_initializer='he_normal', use_bias=False,activation=None)(x)
+    x = tf.keras.layers.Conv2D(1024, (3,3), strides=2, padding="same",kernel_initializer='he_normal', use_bias=False,activation=None)(x)
     x = tf.keras.layers.BatchNormalization()(x)
     x = tf.keras.layers.LeakyReLU(0.1)(x)
 
-    x = tf.keras.layers.Conv2D(32, (3, 3), strides=1, padding="same",kernel_initializer='he_normal', use_bias=False,activation=None)(x)
+    x = tf.keras.layers.Conv2D(1024, (3, 3), strides=1, padding="same",kernel_initializer='he_normal', use_bias=False,activation=None)(x)
     x = tf.keras.layers.BatchNormalization()(x)
     x = tf.keras.layers.LeakyReLU(0.1)(x)
-    x = tf.keras.layers.Conv2D(32, (3, 3), strides=1, padding="same",kernel_initializer='he_normal', use_bias=False,activation=None)(x)
+    x = tf.keras.layers.Conv2D(1024, (3, 3), strides=1, padding="same",kernel_initializer='he_normal', use_bias=False,activation=None)(x)
     x = tf.keras.layers.BatchNormalization()(x)
     x = tf.keras.layers.LeakyReLU(0.1)(x)
 
@@ -91,7 +91,7 @@ def backbone_darknet(input_shape=(448, 448, 3)):
     yolo_map_metric = YoloV1Metric(iou_threshold=0.5)
 
     #compile model
-    optimizer = tf.keras.optimizers.SGD(0.001, momentum=0.9, clipnorm=1.0)
+    optimizer = tf.keras.optimizers.SGD(0.001, momentum=0.9, clipnorm=5.0)
     model_yolo_v1.compile(
         optimizer=optimizer, loss=YOLOLoss(), metrics=[yolo_map_metric]
     )

@@ -1,7 +1,7 @@
 from models import backbone_darknet
 from utils import *
 
-BATCH_SIZE = 20
+BATCH_SIZE = 1
 # Get all XML file paths in path_annot and sort them
 xml_files = sorted(
     [
@@ -60,7 +60,7 @@ except:
     pass
 
 # fit model
-history = model_yolo_v1.fit(dataset_train, epochs=50,verbose=1,steps_per_epoch=len(xml_files_train) // BATCH_SIZE, callbacks=lr_callback, validation_data=dataset_val ,validation_steps=len(xml_files_validation)//BATCH_SIZE)
+history = model_yolo_v1.fit(dataset_train, epochs=200, verbose=1,steps_per_epoch=len(xml_files_train) // BATCH_SIZE, callbacks=lr_callback, validation_data=dataset_train ,validation_steps=len(xml_files_validation)//BATCH_SIZE)
 
 # save model
 model_yolo_v1.save_weights(filepath="my_model.weights.h5")
