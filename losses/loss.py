@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 class YOLOLoss(tf.keras.losses.Loss):
-    def __init__(self, grid_size=7, num_boxes=2, num_classes=2, lambda_coord=5.0, lambda_noobj=0.5):
+    def __init__(self, grid_size=7, num_boxes=2, num_classes=2, lambda_coord=10.0, lambda_noobj=0.1):
         super(YOLOLoss, self).__init__()
         self.S = grid_size  # Kích thước lưới (S x S), mặc định 7x7
         self.B = num_boxes  # Số hộp dự đoán mỗi ô lưới, mặc định 2
@@ -19,6 +19,17 @@ class YOLOLoss(tf.keras.losses.Loss):
         y_true = tf.reshape(y_true, shape=(-1,self.S, self.S, 5+self.C)) # chuyển về chiều mẫu
         y_pred = tf.reshape(y_pred, shape=(-1, self.S, self.S, 5*self.B + self.C)) # chuyển về chiều mẩu
 
+        xy_1 = tf.sigmoid(y_pred[...,0:2])
+        wh_1 = y_pred[...,2:4]
+        c1 = tf.sigmoid(y_pred[...,4:5])
+
+        xy_2 = tf.sigmoid(y_pred[...,5:7])
+        wh_2 = y_pred[...,7:9]
+        c2 = tf.sigmoid(y_pred[...,9:10])
+
+        classes = y_pred[...,10:]
+
+        y_pred = tf.concat([xy_1, wh_1, c1, xy_2, wh_2, c2, classes], axis=-1)
 
         # giua box 1 va box true
         iou1 = self.calculate_iou(y_true[...,0:4], y_pred[..., 0:4]) # tinh iou của box 1 vs ground box
@@ -46,7 +57,8 @@ class YOLOLoss(tf.keras.losses.Loss):
 
         # confident
         confident_loss = tf.math.reduce_sum(y_true[...,4:5] * tf.math.square(tf.reshape(iou_max, (-1,self.S,self.S,1)) - box_max[...,4:5]))
-
+        no_confident_loss = tf.math.reduce_sum((1 - y_true[..., 4:5]) * tf.math.square(0 - y_pred[..., 4:5])) + \
+                            tf.math.reduce_sum((1 - y_true[..., 4:5]) * tf.math.square(0 - y_pred[..., 9:10]))
 
         # classification loss
         class_loss = tf.math.reduce_sum(tf.math.square(
@@ -54,8 +66,7 @@ class YOLOLoss(tf.keras.losses.Loss):
         ))
 
         # confiden no object
-        no_confident_loss = tf.math.reduce_sum((1 - y_true[..., 4:5]) * tf.math.square(0 - y_pred[..., 4:5])) + \
-                            tf.math.reduce_sum((1 - y_true[..., 4:5]) * tf.math.square(0 - y_pred[..., 9:10]))
+
 
         total_loss = self.lambda_coord * (loss_xy + loss_wh)  +  confident_loss +  class_loss + self.lambda_noobj * no_confident_loss
         return total_loss
@@ -89,4 +100,8 @@ class YOLOLoss(tf.keras.losses.Loss):
 
         iou = intersect_area / (union_area + tf.keras.backend.epsilon())
         return iou
-
+#
+# a = tf.random.normal((1,7,7,7))
+# b = tf.random.normal((1,7,7,12))
+# loss = YOLOLoss()
+# kq = loss(a,b)

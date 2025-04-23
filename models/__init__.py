@@ -1,2 +1,2 @@
 # initialize
-from .backbone import backbone_darknet, pre_traing
+from .backbone import backbone_darknet, yolo
