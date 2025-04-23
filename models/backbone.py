@@ -9,7 +9,6 @@ def backbone_darknet(input_shape=(448, 448, 3)):
         inputs
     """
     inputs = tf.keras.Input(shape=input_shape)
-
     # Block 1
     x = tf.keras.layers.Conv2D(31, (7, 7), strides=2,kernel_initializer='he_normal', padding='same', use_bias=False ,activation=None)(inputs)
     x = tf.keras.layers.BatchNormalization()(x)
@@ -81,13 +80,13 @@ def backbone_darknet(input_shape=(448, 448, 3)):
     model_yolo_v1 = tf.keras.Model(inputs=inputs, outputs=x, name='yolo_v1_model') # model cần trả về
     return model_yolo_v1
 
-def yolo():
+def yolo(input_shape=(448,448,3)):
     """
         Lớp dense cho dự đoán dầu ra.
         inputs
     """
     # Đầu vào của model
-    model_yolo_v1 = backbone_darknet()
+    model_yolo_v1 = backbone_darknet(input_shape)
     x = tf.keras.layers.Flatten()(model_yolo_v1.output)  # flatten layers
     x = tf.keras.layers.Dense(1000, activation=leak_rl)(x)
     x = tf.keras.layers.Dense(588, activation="linear")(x)

@@ -1,5 +1,7 @@
 from models import backbone_darknet
 from utils import *
+from losses.loss import YOLOLoss
+from models import  yolo
 
 BATCH_SIZE = 1
 # Get all XML file paths in path_annot and sort them
@@ -53,14 +55,18 @@ dataset_val = dataset_val.prefetch(tf.data.AUTOTUNE)
 lr_callback = tf.keras.callbacks.LearningRateScheduler(lr_scheduler) # call batch để setting learning rate
 
 # load backbone
-model_yolo_v1 = backbone_darknet(input_shape=(448,448,3))
-try:
-    model_yolo_v1.load_weights("my_model.weights.h5")
-except:
-    pass
+model_yolo_v1 = yolo(input_shape=(448,448,3))
+# try:
+#     model_yolo_v1.load_weights("my_model.weights.h5")
+# except:
+#     pass
+
+# compile model
+optimizer = tf.keras.optimizers.SGD(0.0001, momentum=0.9, clipnorm=1.0)
+model_yolo_v1.compile(optimizer=optimizer, loss=YOLOLoss())
 
 # fit model
-history = model_yolo_v1.fit(dataset_train, epochs=200, verbose=1,steps_per_epoch=len(xml_files_train) // BATCH_SIZE, callbacks=lr_callback, validation_data=dataset_train ,validation_steps=len(xml_files_validation)//BATCH_SIZE)
+history = model_yolo_v1.fit(dataset_train, epochs=50, verbose=1,steps_per_epoch=len(xml_files_train) // BATCH_SIZE, callbacks=lr_callback, validation_data=dataset_train ,validation_steps=len(xml_files_validation)//BATCH_SIZE)
 
 # save model
 model_yolo_v1.save_weights(filepath="my_model.weights.h5")

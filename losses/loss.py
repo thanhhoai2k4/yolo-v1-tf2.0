@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 class YOLOLoss(tf.keras.losses.Loss):
-    def __init__(self, grid_size=7, num_boxes=2, num_classes=2, lambda_coord=10.0, lambda_noobj=0.1):
+    def __init__(self, grid_size=7, num_boxes=2, num_classes=2, lambda_coord=5, lambda_noobj=0.1):
         super(YOLOLoss, self).__init__()
         self.S = grid_size  # Kích thước lưới (S x S), mặc định 7x7
         self.B = num_boxes  # Số hộp dự đoán mỗi ô lưới, mặc định 2
@@ -53,23 +53,24 @@ class YOLOLoss(tf.keras.losses.Loss):
         # wh
         w = y_true[...,4:5] * tf.math.square(tf.math.sqrt(tf.maximum(box_max[...,2:3], 1e-6)) - tf.math.sqrt(tf.maximum(y_true[...,2:3], 1e-6)))
         h = y_true[...,4:5] * tf.math.square(tf.math.sqrt(tf.maximum(box_max[...,3:4], 1e-6)) - tf.math.sqrt(tf.maximum(y_true[...,3:4], 1e-6)))
+        a = tf.math.reduce_sum(w)
+        b = tf.math.reduce_sum(h)
         loss_wh = tf.math.reduce_sum(w) + tf.math.reduce_sum(h)
 
-        # confident
-        confident_loss = tf.math.reduce_sum(y_true[...,4:5] * tf.math.square(tf.reshape(iou_max, (-1,self.S,self.S,1)) - box_max[...,4:5]))
-        no_confident_loss = tf.math.reduce_sum((1 - y_true[..., 4:5]) * tf.math.square(0 - y_pred[..., 4:5])) + \
-                            tf.math.reduce_sum((1 - y_true[..., 4:5]) * tf.math.square(0 - y_pred[..., 9:10]))
+        # confident)
+        confident_loss = tf.math.reduce_sum(y_true[...,4:5] * tf.math.square( y_true[...,4:5] - box_max[...,4:5]))
+        # confiden no object
+        no_confident_loss = tf.math.reduce_sum((1 - y_true[..., 4:5]) * tf.math.square(y_true[...,4:5] - y_pred[..., 4:5])) + \
+                            tf.math.reduce_sum((1 - y_true[..., 4:5]) * tf.math.square(y_true[...,4:5] - y_pred[..., 9:10]))
 
         # classification loss
         class_loss = tf.math.reduce_sum(tf.math.square(
             y_true[..., 4:5] * (y_true[...,5:5+self.C] - y_pred[...,-self.C:])
         ))
 
-        # confiden no object
-
-
+        # final loss total.
         total_loss = self.lambda_coord * (loss_xy + loss_wh)  +  confident_loss +  class_loss + self.lambda_noobj * no_confident_loss
-        return total_loss
+        return total_loss/ tf.cast(tf.shape(y_true[0]), dtype=tf.float32)
 
     def calculate_iou(self, true_boxes, pred_boxes):
         """
@@ -100,8 +101,3 @@ class YOLOLoss(tf.keras.losses.Loss):
 
         iou = intersect_area / (union_area + tf.keras.backend.epsilon())
         return iou
-#
-# a = tf.random.normal((1,7,7,7))
-# b = tf.random.normal((1,7,7,12))
-# loss = YOLOLoss()
-# kq = loss(a,b)
