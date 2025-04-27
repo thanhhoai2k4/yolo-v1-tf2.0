@@ -194,28 +194,45 @@ def plot_anchors_xyxy(image:np.array, all_anchors: np.array, labels: np.array)->
     plt.show()
 
 
-
-def deta2org(input, imagesize = (448.0,448.0), S=7):
+def delta2org_v1(input, imagesize=(448.0, 448.0), S=7, predict_sqrt_wh=True):
     """
-
-    :param input: 7 x 7 x 4
-    :param imagesize: img size
-    :param S: number grird
-    :return: box x y w h
+    input: (..., 4) tensor, channels = [x_offset, y_offset, w_pred, h_pred]
+    imagesize: (W_img, H_img)
+    S: grid size
+    predict_sqrt_wh: True nếu network output sqrt(w_norm), sqrt(h_norm)
+    returns: (..., 4) tensor of absolute [x_center, y_center, width, height] in pixels
     """
-
     W_img, H_img = imagesize
+    cell_size_x = W_img / S
+    cell_size_y = H_img / S
 
-    # Tạo chỉ số của cell trong lưới
+    # grid indices
     cell_indices = tf.range(S, dtype=tf.float32)
-    cx, cy = tf.meshgrid(cell_indices, cell_indices)  # (S, S)
+    cx, cy = tf.meshgrid(cell_indices, cell_indices)  # cx: x index, cy: y index
+    # expand dims to broadcast với batch và box dims
+    cell_x = tf.expand_dims(cx, axis=-1)  # shape (S, S, 1)
+    cell_y = tf.expand_dims(cy, axis=-1)
 
-    # Nhập cx và cy vào một tensor có dạng (S, S, 2)
-    cell_grid = tf.stack([cy, cx], axis=-1)  * 64.0 # (S, S, 2)
-    xy = input[...,0:2] * 64 + cell_grid
-    wh = input[...,2:4]*W_img
-    kq = tf.concat([xy,wh], axis=-1) # xywh
-    return kq
+    # offsets within cell (0–1)
+    x_offset = input[..., 0:1]
+    y_offset = input[..., 1:2]
+    if predict_sqrt_wh:
+        w_norm = tf.square(input[..., 2:3])
+        h_norm = tf.square(input[..., 3:4])
+    else:
+        w_norm = input[..., 2:3]
+        h_norm = input[..., 3:4]
+
+    # absolute centers
+    x_center = (cell_x + x_offset) * cell_size_x
+    y_center = (cell_y + y_offset) * cell_size_y
+
+    # absolute sizes
+    width  = w_norm * W_img
+    height = h_norm * H_img
+
+    return tf.concat([x_center, y_center, width, height], axis=-1)
+
 
 def lr_scheduler(epoch):
     """
@@ -235,18 +252,16 @@ def lr_scheduler(epoch):
     elif epoch < 40:
         return 0.0001
     else:
-        return 0.0008
+        return 0.00007
 def outputyolo(label, S=7):
 
-    c1 = tf.sigmoid(label[...,4:5]) # confident cua box 1
-    c2 = tf.sigmoid(label[..., 9:10]) # confident cua box 2
+    c1 = label[...,4:5] # confident cua box 1
+    c2 = label[..., 9:10] # confident cua box 2
 
     confident = tf.concat([c1, c2], axis=-1)
 
     box1 = label[...,0:4]
-    box1[...,0:2] = tf.sigmoid(box1[...,0:2])
     box2 = label[...,5:9]
-    box2[..., 0:2] = tf.sigmoid(box2[..., 0:2])
     box_pred = tf.stack([box1, box2], axis=-2)
 
     index_max = tf.math.argmax(confident, axis=-1)
@@ -256,7 +271,7 @@ def outputyolo(label, S=7):
 
 
     # bước chuyển giá trị tương đối sang tuyệt đối
-    xywh = deta2org(box_max, (448.0, 448.0), 7) # 7,7,4
+    xywh = delta2org_v1(box_max) # 7,7,4
 
     xywh = tf.reshape(xywh, shape=(S*S,4))
     c = tf.reshape(confident_max, shape=(-1,1))

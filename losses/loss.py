@@ -19,18 +19,6 @@ class YOLOLoss(tf.keras.losses.Loss):
         y_true = tf.reshape(y_true, shape=(-1,self.S, self.S, 5+self.C)) # chuyển về chiều mẫu
         y_pred = tf.reshape(y_pred, shape=(-1, self.S, self.S, 5*self.B + self.C)) # chuyển về chiều mẩu
 
-        xy_1 = tf.sigmoid(y_pred[...,0:2])
-        wh_1 = y_pred[...,2:4]
-        c1 = tf.sigmoid(y_pred[...,4:5])
-
-        xy_2 = tf.sigmoid(y_pred[...,5:7])
-        wh_2 = y_pred[...,7:9]
-        c2 = tf.sigmoid(y_pred[...,9:10])
-
-        classes = y_pred[...,10:]
-
-        y_pred = tf.concat([xy_1, wh_1, c1, xy_2, wh_2, c2, classes], axis=-1)
-
         # giua box 1 va box true
         iou1 = self.calculate_iou(y_true[...,0:4], y_pred[..., 0:4]) # tinh iou của box 1 vs ground box
         # giua box 2 va box true
