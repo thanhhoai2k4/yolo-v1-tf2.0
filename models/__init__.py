@@ -1,2 +1,1 @@
-# initialize
-from .backbone import backbone_darknet, yolo
+from .backbone import build_yolo_v1_vgg16
