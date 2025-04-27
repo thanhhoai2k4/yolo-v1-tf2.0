@@ -1,95 +1,63 @@
-import tensorflow as tf
+from tensorflow.keras.applications import VGG16
+from tensorflow.keras import layers, Model
 
-leak_rl = tf.keras.layers.LeakyReLU(0.1)
 
+def backboneVGG16(input_shape=(448,448,3),train_backbone=False):
+    backbone = VGG16(
+        include_top=False,
+        weights='imagenet',
+        input_shape=input_shape
+    )
 
-def backbone_darknet(input_shape=(448, 448, 3)):
+    for layer in backbone.layers:
+        layer.trainable = train_backbone
+    return backbone
+def build_yolo_v1_vgg16(
+    input_shape=(448, 448, 3),
+    grid_size=7,
+    num_boxes=2,
+    num_classes=2,
+    train_backbone=False
+):
     """
-        Lớp cơ sở cho yolo v1
-        inputs
+    Xây dựng kiến trúc YOLO v1 kế thừa từ VGG16.
+
+    Tham số:
+      - input_shape: tuple, kích thước đầu vào của ảnh.
+      - grid_size: S, kích thước lưới (S x S).
+      - num_boxes: B, số bounding boxes mỗi ô.
+      - num_classes: C, số lớp cần dự đoán.
+      - train_backbone: bool, có cho phép fine-tune VGG16 hay không.
+
+    Trả về:
+      - tf.keras.Model: model YOLO v1.
     """
-    inputs = tf.keras.Input(shape=input_shape)
-    # Block 1
-    x = tf.keras.layers.Conv2D(31, (7, 7), strides=2,kernel_initializer='he_normal', padding='same', use_bias=False ,activation=None)(inputs)
-    x = tf.keras.layers.BatchNormalization()(x)
-    x = tf.keras.layers.LeakyReLU(0.1)(x)
-    x = tf.keras.layers.MaxPooling2D(pool_size=(2, 2), strides=2)(x)
 
-    # Block 2
-    x = tf.keras.layers.Conv2D(192, (3, 3), padding='same',kernel_initializer='he_normal',use_bias=False, activation=None)(x)
-    x = tf.keras.layers.BatchNormalization()(x)
-    x = tf.keras.layers.LeakyReLU(0.1)(x)
-    x = tf.keras.layers.MaxPooling2D(pool_size=(2, 2), strides=2)(x)
+    # 1. Backbone: VGG16 không bao gồm fully-connected layers
+    backbone = backboneVGG16(input_shape=input_shape, train_backbone=train_backbone)
 
-    # Block 3
-    x = tf.keras.layers.Conv2D(128, (1, 1),kernel_initializer='he_normal',use_bias=False, activation=None)(x)
-    x = tf.keras.layers.BatchNormalization()(x)
-    x = tf.keras.layers.LeakyReLU(0.1)(x)
-    x = tf.keras.layers.Conv2D(256, (3, 3),kernel_initializer='he_normal', padding='same', use_bias=False, activation=None)(x)
-    x = tf.keras.layers.BatchNormalization()(x)
-    x = tf.keras.layers.LeakyReLU(0.1)(x)
-    x = tf.keras.layers.Conv2D(256, (1, 1),kernel_initializer='he_normal', use_bias=False,activation=None)(x)
-    x = tf.keras.layers.BatchNormalization()(x)
-    x = tf.keras.layers.LeakyReLU(0.1)(x)
-    x = tf.keras.layers.Conv2D(512, (3, 3),kernel_initializer='he_normal', padding='same', use_bias=False,activation=None)(x)
-    x = tf.keras.layers.BatchNormalization()(x)
-    x = tf.keras.layers.LeakyReLU(0.1)(x)
-    x = tf.keras.layers.MaxPooling2D(pool_size=(2, 2), strides=2)(x)
+    x = backbone.output  # Output shape ví dụ (None, 14,14,512) với input 448x448
 
-    # Block 4 (4x convolutional layers)
-    for _ in range(4):
-        x = tf.keras.layers.Conv2D(256, (1, 1),kernel_initializer='he_normal',use_bias=False, activation=None)(x)
-        x = tf.keras.layers.BatchNormalization()(x)
-        x = tf.keras.layers.LeakyReLU(0.1)(x)
-        x = tf.keras.layers.Conv2D(512, (3, 3),kernel_initializer='he_normal', padding='same',use_bias=False, activation=None)(x)
-        x = tf.keras.layers.BatchNormalization()(x)
-        x = tf.keras.layers.LeakyReLU(0.1)(x)
+    # 2. Thêm các convolutional layers theo YOLO v1 (tùy biến)
+    # Conv 1
+    x = layers.Conv2D(1024, (3, 3), padding='same')(x)
+    x = layers.LeakyReLU(alpha=0.1)(x)
+    # Conv 2 với stride 2 để giảm độ phân giải
+    x = layers.Conv2D(1024, (3, 3), strides=(2, 2), padding='same')(x)
+    x = layers.LeakyReLU(alpha=0.1)(x)
 
-    x = tf.keras.layers.Conv2D(512, (1, 1),kernel_initializer='he_normal', use_bias=False, activation=None)(x)
-    x = tf.keras.layers.BatchNormalization()(x)
-    x = tf.keras.layers.LeakyReLU(0.1)(x)
-    x = tf.keras.layers.Conv2D(1024, (3, 3), padding='same',kernel_initializer='he_normal', use_bias=False, activation=None)(x)
-    x = tf.keras.layers.BatchNormalization()(x)
-    x = tf.keras.layers.LeakyReLU(0.1)(x)
-    x = tf.keras.layers.MaxPooling2D(pool_size=(2, 2), strides=2)(x)
+    # 3. Flatten và FC layers như YOLO v1
+    x = layers.Flatten()(x)
+    x = layers.Dropout(0.5)(x)
+    x = layers.Dense(4096)(x)
+    x = layers.LeakyReLU(alpha=0.1)(x)
+    x = layers.Dropout(0.5)(x)
 
-    # Block 5 (2x convolutional layers)
-    for _ in range(2):
-        x = tf.keras.layers.Conv2D(512, (1, 1), kernel_initializer='he_normal',activation=None, use_bias=False)(x)
-        x = tf.keras.layers.BatchNormalization()(x)
-        x = tf.keras.layers.LeakyReLU(0.1)(x)
-        x = tf.keras.layers.Conv2D(1024, (3, 3), padding='same',kernel_initializer='he_normal', use_bias=False,activation=None)(x)
-        x = tf.keras.layers.BatchNormalization()(x)
-        x = tf.keras.layers.LeakyReLU(0.1)(x)
+    # 4. Output layer dự đoán S x S x (B*5 + C)
+    output_units = grid_size * grid_size * (num_boxes * 5 + num_classes)
+    x = layers.Dense(output_units, activation='linear')(x)
+    output = layers.Reshape((grid_size, grid_size, num_boxes * 5 + num_classes))(x)
 
-
-    x = tf.keras.layers.Conv2D(1024, (3,3), strides=1, padding="same",kernel_initializer='he_normal', use_bias=False,activation=None)(x)
-    x = tf.keras.layers.BatchNormalization()(x)
-    x = tf.keras.layers.LeakyReLU(0.1)(x)
-    x = tf.keras.layers.Conv2D(1024, (3,3), strides=2, padding="same",kernel_initializer='he_normal', use_bias=False,activation=None)(x)
-    x = tf.keras.layers.BatchNormalization()(x)
-    x = tf.keras.layers.LeakyReLU(0.1)(x)
-
-    x = tf.keras.layers.Conv2D(1024, (3, 3), strides=1, padding="same",kernel_initializer='he_normal', use_bias=False,activation=None)(x)
-    x = tf.keras.layers.BatchNormalization()(x)
-    x = tf.keras.layers.LeakyReLU(0.1)(x)
-    x = tf.keras.layers.Conv2D(1024, (3, 3), strides=1, padding="same",kernel_initializer='he_normal', use_bias=False,activation=None)(x)
-    x = tf.keras.layers.BatchNormalization()(x)
-    x = tf.keras.layers.LeakyReLU(0.1)(x)
-
-    model_yolo_v1 = tf.keras.Model(inputs=inputs, outputs=x, name='yolo_v1_model') # model cần trả về
-    return model_yolo_v1
-
-def yolo(input_shape=(448,448,3)):
-    """
-        Lớp dense cho dự đoán dầu ra.
-        inputs
-    """
-    # Đầu vào của model
-    model_yolo_v1 = backbone_darknet(input_shape)
-    x = tf.keras.layers.Flatten()(model_yolo_v1.output)  # flatten layers
-    x = tf.keras.layers.Dense(1000, activation=leak_rl)(x)
-    x = tf.keras.layers.Dense(588, activation="linear")(x)
-    x = tf.keras.layers.Reshape(target_shape=(7, 7, 12))(x)
-    yolo_head = tf.keras.Model(inputs=model_yolo_v1.input, outputs=x, name='yolo_head')
-    return yolo_head
+    # 5. Build model
+    model = Model(inputs=backbone.input, outputs=output, name='YOLOv1_VGG16')
+    return model
