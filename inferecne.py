@@ -3,7 +3,7 @@ import numpy as np
 from models.backbone import *
 
 # # tải model từ local
-yoloV1 = backbone_darknet((448,448,3))
+yoloV1 = build_yolo_v1_vgg16((448,448,3))
 yoloV1.load_weights("my_model.weights.h5")
 
 
