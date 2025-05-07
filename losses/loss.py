@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 class YOLOLoss(tf.keras.losses.Loss):
-    def __init__(self, grid_size=7, num_boxes=2, num_classes=2, lambda_coord=5, lambda_noobj=0.1):
+    def __init__(self, grid_size=7, num_boxes=2, num_classes=2, lambda_coord=5, lambda_noobj=0.5):
         super(YOLOLoss, self).__init__()
         self.S = grid_size  # Kích thước lưới (S x S), mặc định 7x7
         self.B = num_boxes  # Số hộp dự đoán mỗi ô lưới, mặc định 2
@@ -16,49 +16,56 @@ class YOLOLoss(tf.keras.losses.Loss):
         :param y_pred:  đầu vào là batch, 7,7,12: x y w h c x y w h cc p1 ... pn ở đây số class là 2
         :return: loss của tất cả batch. Không tính trung binh cộng. nếu muốn tính thế tf.math.reduce_sum = tf.math.reduce_mean
         """
-        y_true = tf.reshape(y_true, shape=(-1,self.S, self.S, 5+self.C)) # chuyển về chiều mẫu
-        y_pred = tf.reshape(y_pred, shape=(-1, self.S, self.S, 5*self.B + self.C)) # chuyển về chiều mẩu
+        y_true = tf.reshape(y_true, shape=(-1,self.S, self.S, 5+self.C)) # batch,S,S,7
+        y_pred = tf.reshape(y_pred, shape=(-1, self.S, self.S, 5*self.B + self.C)) # batch,S,S,12
 
-        # giua box 1 va box true
-        iou1 = self.calculate_iou(y_true[...,0:4], y_pred[..., 0:4]) # tinh iou của box 1 vs ground box
-        # giua box 2 va box true
-        iou2 = self.calculate_iou(y_true[...,0:4], y_pred[..., 5:9]) # tinh iou của box 1 vs ground box
+        xywhc_true = tf.reshape(y_true[..., :-self.C], shape=(-1,self.S, self.S, 1, 5)) # batch,S,S,1,5
+        xywhc_pred = tf.reshape(y_pred[...,:-self.C], shape=(-1,self.S, self.S, self.B, 5)) # batch,S,S,B,5
 
-        ious = tf.stack([iou1, iou2], axis=-1)
-        index_max = tf.math.argmax(ious, axis=-1)
-        iou_max = tf.gather(ious, index_max, batch_dims=3, axis=-1)
+        iou_scores = self.calculate_iou(xywhc_true, xywhc_pred) #batch,S,S,B
 
-        box_pred = tf.stack([y_pred[...,0:5], y_pred[...,5:10]], axis=-2)
-        box_max = tf.gather(box_pred, index_max, batch_dims=3, axis=-2)
+        # tinh ra vi tri lon nhat giua 2 cai box dua tren ious
+        arg_max = tf.math.argmax(input=iou_scores, axis=-1, name="arg_max_x") # batch,S,S
 
-        # xy
-        loss_xy = tf.reduce_sum(
-            y_true[...,4:5] * tf.square(
-                y_true[...,0:2] - box_max[...,0:2]
-            )
-        )
+        # tao ra cai one hot de tim co object va ko object
+        onehot = tf.one_hot(indices=arg_max, depth=self.B) # batch,7,7,2
 
-        # wh
-        w = y_true[...,4:5] * tf.math.square(tf.math.sqrt(tf.maximum(box_max[...,2:3], 1e-6)) - tf.math.sqrt(tf.maximum(y_true[...,2:3], 1e-6)))
-        h = y_true[...,4:5] * tf.math.square(tf.math.sqrt(tf.maximum(box_max[...,3:4], 1e-6)) - tf.math.sqrt(tf.maximum(y_true[...,3:4], 1e-6)))
-        a = tf.math.reduce_sum(w)
-        b = tf.math.reduce_sum(h)
-        loss_wh = tf.math.reduce_sum(w) + tf.math.reduce_sum(h)
+        # lay cac doi tuong co doi tuong
+        has_obj = xywhc_true[...,4] # batch,7,7,1
+        index_has_object = has_obj * onehot # batch,7,7,2
+        # them 1 chieu vao de phu hop voi phep nhan ma tran o hang xx
+        index_has_object_exp = tf.expand_dims(index_has_object,axis=-2)
+        index_no_object = 1 - index_has_object_exp # batch,7,7,2
 
-        # confident)
-        confident_loss = tf.math.reduce_sum(y_true[...,4:5] * tf.math.square( y_true[...,4:5] - box_max[...,4:5]))
-        # confiden no object
-        no_confident_loss = tf.math.reduce_sum((1 - y_true[..., 4:5]) * tf.math.square(y_true[...,4:5] - y_pred[..., 4:5])) + \
-                            tf.math.reduce_sum((1 - y_true[..., 4:5]) * tf.math.square(y_true[...,4:5] - y_pred[..., 9:10]))
+        # xy loss
+        xy_true = xywhc_true[...,:2] # batch,7,7,1,2
+        xy_pred = xywhc_pred[...,:2] # batch,7,7,2,2
+        loss_xy = tf.math.reduce_sum(index_has_object_exp*tf.math.square(xy_true - xy_pred))
 
-        # classification loss
-        class_loss = tf.math.reduce_sum(tf.math.square(
-            y_true[..., 4:5] * (y_true[...,5:5+self.C] - y_pred[...,-self.C:])
-        ))
+        # wh loss
+        wh_true = xywhc_true[...,2:4] # batch,7,7,1,2
+        wh_pred = xywhc_pred[...,2:4] # batch,7,7,2,2
 
-        # final loss total.
-        total_loss = self.lambda_coord * (loss_xy + loss_wh)  +  confident_loss +  class_loss + self.lambda_noobj * no_confident_loss
-        return total_loss/ tf.cast(tf.shape(y_true[0]), dtype=tf.float32)
+        # sy ly gia tri am trong wh vi trong qua trinh su dung can thi wh am tra ve Nan va x + Nan  = Nan
+        wh_true = tf.math.maximum(wh_true, 1e-6)
+        wh_pred = tf.math.maximum(wh_pred, 1e-6)
+        loss_wh = tf.math.reduce_sum(index_has_object_exp*tf.math.square(tf.math.sqrt(wh_true) - tf.math.sqrt(wh_pred)))
+
+        # loss cho confident co object va ko co obj
+        c_true = xywhc_true[...,4]
+        c_pred = xywhc_pred[...,4]
+        loss_has_object_c = tf.math.reduce_sum(index_has_object*tf.math.square((c_true - c_pred)))
+        loss_no_object_c = tf.math.reduce_sum((1-index_has_object) * tf.math.square((c_true - c_pred)))
+
+
+        p_true = y_true[...,-self.C:] # batch,S,S,C
+        y_pred = y_pred[...,-self.C:] # batch,S,S,C
+        loss_p = tf.math.reduce_sum(has_obj*tf.math.square(p_true - y_pred))
+
+
+        total_loss = self.lambda_coord*loss_xy + self.lambda_coord*loss_wh + loss_has_object_c + self.lambda_noobj*loss_no_object_c + loss_p
+
+        return total_loss
 
     def calculate_iou(self, true_boxes, pred_boxes):
         """
