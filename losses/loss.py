@@ -49,7 +49,7 @@ class YOLOLoss(tf.keras.losses.Loss):
         # sy ly gia tri am trong wh vi trong qua trinh su dung can thi wh am tra ve Nan va x + Nan  = Nan
         wh_true = tf.math.maximum(wh_true, 1e-6)
         wh_pred = tf.math.maximum(wh_pred, 1e-6)
-        loss_wh = tf.math.reduce_sum(index_has_object_exp*tf.math.square(tf.math.sqrt(wh_true) - tf.math.sqrt(wh_pred)))
+        loss_wh = tf.math.reduce_sum(index_has_object_exp*tf.math.square(wh_true - wh_pred))
 
         # loss cho confident co object va ko co obj
         c_true = xywhc_true[...,4]

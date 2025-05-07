@@ -209,7 +209,7 @@ def lr_scheduler(epoch):
     """
     if (epoch < 20):
         # Công thức tuyến tính để tính learning rate
-        return 0.0001 + (0.001 - 0.0001) * (epoch / 20)
+        return 0.00001 + (0.0001 - 0.00001) * (epoch / 20)
     elif epoch < 40:
         return 0.0001
     else:
