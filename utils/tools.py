@@ -162,6 +162,7 @@ def convert_onepart(image, boxes, labels):
     i = np.asarray(x_center * S, dtype="int")
     j = np.asarray(y_center * S, dtype="int")
 
+
     x_rel = (x_center * S) - i
     y_rel = (y_center * S) - j
 
@@ -194,7 +195,26 @@ def plot_anchors_xyxy(image:np.array, all_anchors: np.array, labels: np.array)->
     plt.show()
 
 
-def delta2org_v1(input, imagesize=(448.0, 448.0), S=7, predict_sqrt_wh=True):
+def lr_scheduler(epoch):
+    """
+    :param epoch: số lượng training hiện hành để thực hiện điều chỉnh learning rate
+    :return: learning rate . Lúc khởi đầu thì lớn càng về sau thì càng nhỏ
+
+    congthuc: tuyen tinh.
+        start_lr + (end_lr - start_lr) * (epoch / total_epochs)
+        epoch (int): Epoch hiện tại.
+        total_epochs (int): Tổng số epoch.
+        start_lr (float): Learning rate ban đầu (mặc định là 0.0001).
+        end_lr (float): Learning rate cuối cùng (mặc định là 0.01)
+    """
+    if (epoch < 20):
+        # Công thức tuyến tính để tính learning rate
+        return 0.0001 + (0.001 - 0.0001) * (epoch / 20)
+    elif epoch < 40:
+        return 0.0001
+    else:
+        return 0.00007
+def delta2org_v1(input, imagesize=(448.0, 448.0), S=7):
     """
     input: (..., 4) tensor, channels = [x_offset, y_offset, w_pred, h_pred]
     imagesize: (W_img, H_img)
@@ -216,12 +236,8 @@ def delta2org_v1(input, imagesize=(448.0, 448.0), S=7, predict_sqrt_wh=True):
     # offsets within cell (0–1)
     x_offset = input[..., 0:1]
     y_offset = input[..., 1:2]
-    if predict_sqrt_wh:
-        w_norm = tf.square(input[..., 2:3])
-        h_norm = tf.square(input[..., 3:4])
-    else:
-        w_norm = input[..., 2:3]
-        h_norm = input[..., 3:4]
+    w_norm = input[..., 2:3]
+    h_norm = input[..., 3:4]
 
     # absolute centers
     x_center = (cell_x + x_offset) * cell_size_x
@@ -233,30 +249,10 @@ def delta2org_v1(input, imagesize=(448.0, 448.0), S=7, predict_sqrt_wh=True):
 
     return tf.concat([x_center, y_center, width, height], axis=-1)
 
-
-def lr_scheduler(epoch):
-    """
-    :param epoch: số lượng training hiện hành để thực hiện điều chỉnh learning rate
-    :return: learning rate . Lúc khởi đầu thì lớn càng về sau thì càng nhỏ
-
-    congthuc: tuyen tinh.
-        start_lr + (end_lr - start_lr) * (epoch / total_epochs)
-        epoch (int): Epoch hiện tại.
-        total_epochs (int): Tổng số epoch.
-        start_lr (float): Learning rate ban đầu (mặc định là 0.0001).
-        end_lr (float): Learning rate cuối cùng (mặc định là 0.01)
-    """
-    if (epoch < 20):
-        # Công thức tuyến tính để tính learning rate
-        return 0.0001 + (0.001 - 0.0001) * (epoch / 20)
-    elif epoch < 40:
-        return 0.0001
-    else:
-        return 0.00007
 def outputyolo(label, S=7):
 
-    c1 = label[...,4:5] # confident cua box 1
-    c2 = label[..., 9:10] # confident cua box 2
+    c1 = label[...,4:5] # 1,S,S,1
+    c2 = label[..., 9:10] # 1,7,7,1
 
     confident = tf.concat([c1, c2], axis=-1)
 
@@ -278,7 +274,6 @@ def outputyolo(label, S=7):
     classes = label[...,10:]
 
     return np.array(xywh), np.array(c), np.array(classes)
-
 
 
 def plot_detections(image, boxes, confidences, classes, conf_threshold=0.5):
